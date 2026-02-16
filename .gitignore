@@ -1,0 +1,23 @@
+# Environment and secrets (never commit)
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+venv/
+.venv/
+
+# Data and indexes (regenerate from run_rag.py)
+data/processed/
+logs/
+
+# IDE and OS
+.idea/
+.DS_Store
+*.ipynb_checkpoints

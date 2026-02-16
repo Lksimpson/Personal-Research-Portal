@@ -1,0 +1,1 @@
+{"query_id": "Q01", "type": "Direct", "query": "According to the Global Survey of Working Arrangements in Aksoy et al. (SRC001), what is the average daily commute-time savings when working from home (in minutes)?", "expected_behavior": "Extract the single numeric average (minutes) and cite the relevant passage."}
