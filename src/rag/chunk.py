@@ -1,6 +1,6 @@
 """
 Chunking strategy (documented for Phase 2).
-- Chunk size: 512 tokens (approx 384 chars) with 64 token overlap.
+- Chunk size: 2048 chars with 256 char overlap.
 - Section-aware: we split on paragraph boundaries when possible to avoid mid-sentence cuts.
 - Each chunk gets chunk_id = f"{source_id}_chunk_{i}" for citation.
 """

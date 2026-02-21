@@ -1,6 +1,6 @@
-# Personal Research Portal — Phase 2 RAG System
+# Personal Research Portal — Phase 2 RAG + Phase 3 Portal
 
-A Retrieval-Augmented Generation (RAG) system for answering research questions about remote work and productivity using a curated corpus of 15 academic sources.
+A Retrieval-Augmented Generation (RAG) system for answering research questions about remote work and productivity using a curated corpus of 15 academic sources. Phase 3 adds a web UI (search, citations, research threads, evidence-table artifacts, and export).
 
 **Domain:** Remote work and productivity  
 **Main Question:** How does remote work impact productivity at individual, organizational, and industry levels?
@@ -70,6 +70,23 @@ python -m src.eval.run_eval --no-build
 
 This executes all 20 test queries (9 direct, 5 synthesis, 6 edge cases) and saves results to `outputs/eval_runN.jsonl` (auto-incremented filename). Each entry includes query, retrieved chunks, generated answer, and automated metrics.
 
+### 5. Run the Phase 3 Portal (optional)
+
+With Ollama running and dependencies installed:
+
+```bash
+streamlit run src/app/streamlit_app.py
+```
+
+Then open the URL shown (e.g. http://localhost:8501). The portal provides:
+
+- **Ask** — Enter a research question; get an answer with inline citations and a Sources section. Each run is saved as a research thread and logged to `logs/runs.jsonl`. Missing evidence is stated explicitly when the corpus does not support a claim.
+- **History** — View saved threads (query, answer, retrieved sources). Select a thread to see full details.
+- **Artifacts** — Generate an **Evidence table** (Claim | Evidence snippet | Citation | Confidence | Notes) from a selected thread, then **Export** as Markdown, CSV, or PDF (PDF requires `fpdf2`).
+- **Evaluation** — View a summary of the latest evaluation run (mean groundedness, mean answer relevance, and representative examples by query type). Run the full 20-query evaluation from the command line with `python -m src.eval.run_eval --no-build`; the portal displays the most recent `outputs/eval_runN.jsonl`.
+
+Threads are stored in `threads/threads.jsonl`. Exported artifacts are downloaded via the browser (no separate exports folder required).
+
 ---
 
 ## Project Structure
@@ -93,6 +110,10 @@ src/
     generate.py            # Answer generation via Ollama LLM
     citations.py           # Structured citations and evidence strength scoring
     log_run.py             # JSONL logging of runs
+  app/                     # Phase 3 portal
+    streamlit_app.py       # Streamlit UI: Ask, History, Artifacts, Evaluation
+    threads.py             # File-based research threads (threads/threads.jsonl)
+    artifacts.py           # Evidence table generator and Markdown/CSV/PDF export
   eval/
     metrics.py             # Automated evaluation: groundedness, answer_relevance
     queries.jsonl          # 20 test queries with expected behaviors
@@ -101,8 +122,11 @@ src/
 logs/
   runs.jsonl               # Single-query run logs (from run_rag.py)
 
+threads/
+  threads.jsonl            # Saved research threads (query + evidence + answer)
+
 outputs/
-  eval_runN.jsonl          # Evaluation results (N auto-incremented)
+  eval_runN.jsonl         # Evaluation results (N auto-incremented)
   Phase2_Evaluation_Report.md  # Comprehensive evaluation report
 
 run_rag.py                 # Main pipeline entry point (single query)
@@ -219,7 +243,16 @@ GEMINI_API_KEY=your-key python run_rag.py --no-build --query "..."
 
 ## Deliverables
 
+**Phase 2**  
 ✅ Complete end-to-end RAG pipeline (single command = retrieval + answer + log)  
 ✅ 20-query evaluation set with baseline results  
 ✅ Phase 2 evaluation report analyzing system performance and metrics  
-✅ Automated quality metrics (groundedness, answer_relevance) for all queries
+✅ Automated quality metrics (groundedness, answer_relevance) for all queries  
+
+**Phase 3**  
+✅ Working PRP app: `streamlit run src/app/streamlit_app.py`  
+✅ Search, ask, show sources/citations, and history (research threads)  
+✅ Artifact generator: Evidence table from any thread  
+✅ Export: Markdown, CSV, and PDF download for artifacts  
+✅ Evaluation view: summary of latest eval run and representative examples  
+✅ Trust behavior: every answer includes citations; missing evidence stated explicitly
