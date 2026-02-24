@@ -1,16 +1,11 @@
-# Phase 2 RAG - Research Portal
-# Pinned versions for reproducibility
+# Research Portal — Ollama only; local embeddings (FastEmbed or sentence-transformers)
 pypdf>=4.0.0,<5
 pandas>=2.0.0,<3
 numpy>=1.24.0,<3
 sentence-transformers>=2.2.0,<4
 faiss-cpu>=1.7.0,<2
-openai>=1.0.0,<2
-google-genai>=1.0.0,<2
 python-dotenv>=1.0.0,<2
 tqdm>=4.65.0
-# Optional: local embeddings without PyTorch (avoids segfault on Apple Silicon). Use USE_LOCAL_EMBEDDINGS=fastembed
 fastembed>=0.2.0,<1
-# Phase 3 portal
 streamlit>=1.28.0,<2
 fpdf2>=2.7.0,<3

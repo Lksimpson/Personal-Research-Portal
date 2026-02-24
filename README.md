@@ -1,258 +1,339 @@
-# Personal Research Portal — Phase 2 RAG + Phase 3 Portal
+# Personal Research Portal — AI-Powered Research Document Synthesis
 
-A Retrieval-Augmented Generation (RAG) system for answering research questions about remote work and productivity using a curated corpus of 15 academic sources. Phase 3 adds a web UI (search, citations, research threads, evidence-table artifacts, and export).
-
-**Domain:** Remote work and productivity  
-**Main Question:** How does remote work impact productivity at individual, organizational, and industry levels?
+A complete Retrieval-Augmented Generation (RAG) system that answers research questions using a curated corpus of 15 academic sources on remote work and productivity. **Local-first architecture** — runs entirely on your machine with Ollama (no API keys, no rate limits). Includes a production web UI for searching, organizing research threads, exporting evidence tables, and running evaluations.
 
 ---
 
-## ⚠️ PREREQUISITE: Ollama Must Be Running
+## 🚀 Run in 5 Minutes or Less
 
-This project uses **Ollama** as the default local language model for answer generation. No API quotas, no rate limits, no credentials needed. Before running any queries, ensure Ollama is running in the background:
+### Prerequisites (1 minute)
+
+1. **Start Ollama** (the local language model server):
+   ```bash
+   ollama serve
+   ```
+   
+2. **In a new terminal, pull the model** (if not already present):
+   ```bash
+   ollama pull gemma3:4b
+   ```
+
+### Run the System (3 minutes)
+
+From the project root:
 
 ```bash
-# Start Ollama (runs in background)
-ollama serve
+# 1. Install dependencies (if not already done)
+pip install -r requirements.txt
+
+# 2. Launch the web UI. Run the command below then open http://localhost:8501
+streamlit run src/app/streamlit_app.py
+
+# 2. OR CLI: Run your first query (builds index automatically, ~30 seconds)
+python run_rag.py --query "What is the impact of remote work on productivity?"
+
 ```
 
-Then, in a separate terminal, pull the model once (if not already present):
+**That's it.** The output shows your answer with citations and evidence strength. Open http://localhost:8501 to use the full interface.
+
+---
+
+## 📚 What Is This System?
+
+### Overview
+
+The Personal Research Portal is an intelligent research assistant that synthesizes answers from domain-specific academic sources. It combines:
+- **Semantic retrieval** (embeddings + vector search) to find relevant passages
+- **Local language generation** (Ollama) to synthesis answers with citations
+- **Structured output** with bibliographic references and confidence scoring
+- **Web interface** for exploring research threads, saving findings, and exporting evidence
+
+**Domain:** Remote work and productivity research  
+**Corpus:** 15 carefully selected sources (peer-reviewed papers, working papers, government reports, industry surveys)  
+**Use case:** Answer exploratory research questions like: "How does remote work affect productivity?" "What evidence exists for employee retention improvements?" "Do remote workers get promoted?"
+
+### User Workflow
+
+```
+1. Ask a Question
+   ↓
+2. System retrieves relevant passages from 15 sources
+   ↓
+3. Local LLM synthesizes an answer with inline citations
+   ↓
+4. Result shows: Answer + Sources + Confidence scores
+   ↓
+5. (Optional) Save as research thread, generate evidence table, export to PDF/CSV/BibTeX
+```
+
+---
+
+## ⚠️ Important: Ollama Must Be Running
+
+This system requires **Ollama** to generate answers. It's a local LLM server—no credentials, quotas, or rate limits needed. Before running queries:
 
 ```bash
+# Terminal 1: Start the Ollama server
+ollama serve
+
+# Terminal 2: Pull the model (one-time setup)
 ollama pull gemma3:4b
 ```
 
-Ollama provides local LLM inference without requiring API credentials or hitting quota limits.
-
 ---
 
-## Quick Start for Graders (2 minutes)
+## 🎯 Core Features
 
-### 1. Install Dependencies
+### 1. **Single-Query CLI**
 ```bash
-pip install -r requirements.txt
+python run_rag.py --query "Your research question"
 ```
+- Automatically ingests PDFs and builds index on first run
+- Returns answer with inline citations and evidence strength
+- Logs query, answer, chunks, and metrics to `logs/runs.jsonl`
 
-### 2. Verify PDFs Are Present
-The project expects PDFs in `data/raw/` matching entries in `data/data_manifest.csv`. The PDFs should already be in place for this submission.
-
-### 3. Run a Single Query (build index, then verify)
-
-**Step 3a: Build the chunk index (first run only, ~10 seconds)**
-```bash
-python run_rag.py --query "What is the average daily commute-time savings when working from home?"
-```
-
-This ingests the 15 PDFs and saves chunks to `data/processed/chunks.json`. The system then attempts to build a semantic index:
-- If embeddings are available (Gemini API, OpenAI, or `USE_LOCAL_EMBEDDINGS=fastembed`), it builds a FAISS index for semantic retrieval
-- If index building fails or APIs are unavailable, it gracefully falls back to fast keyword-only retrieval
-- Either way, the workflow completes and Ollama generates an answer
-
-Both retrieval modes work well for this corpus. Keyword-only is more reliable and avoids API quota issues.
-
-**Step 3b: Run with `--no-build` for subsequent queries (instant)**
-```bash
-python run_rag.py --no-build --query "Does remote work increase employee retention rates?"
-```
-
-The `--no-build` flag skips re-ingesting PDFs, making repeated queries fast.
-
-**Output shows three sections:**
-- **[1] RETRIEVAL RESULTS**: Top-5 retrieved chunks with source IDs, chunk IDs, and similarity scores
-- **[2] ANSWER WITH CITATIONS**: LLM-generated answer with inline `(source_id, chunk_id)` citations, References section, and Evidence Strength summary (High/Medium/Low confidence based on retrieval scores)
-- **[3] LOG ENTRY SAVED**: Entry appended to `logs/runs.jsonl` including query, retrieved chunks, answer, groundedness metric, and answer_relevance metric
-
-### 4. Run the Full Evaluation Set (20 queries)
-
+### 2. **Batch Evaluation (20 test queries)**
 ```bash
 python -m src.eval.run_eval --no-build
 ```
+- Runs 20 curated test queries across 3 difficulty tiers
+- Computes automated metrics: groundedness, answer relevance
+- Saves results to `outputs/eval_runs/eval_runN.jsonl`
 
-This executes all 20 test queries (9 direct, 5 synthesis, 6 edge cases) and saves results to `outputs/eval_runN.jsonl` (auto-incremented filename). Each entry includes query, retrieved chunks, generated answer, and automated metrics.
-
-### 5. Run the Phase 3 Portal (optional)
-
-With Ollama running and dependencies installed:
-
+### 3. **Web Interface (Streamlit)**
 ```bash
 streamlit run src/app/streamlit_app.py
 ```
 
-Then open the URL shown (e.g. http://localhost:8501). The portal provides:
+#### Ask Page
+- Search bar with optional **source filtering** (by year, source type, topics)
+- Inline citations: `(source_id, chunk_id)` format
+- Evidence strength labels: High/Medium/Low confidence
+- Results saved automatically as research threads
 
-- **Ask** — Enter a research question; get an answer with inline citations and a Sources section. Each run is saved as a research thread and logged to `logs/runs.jsonl`. Missing evidence is stated explicitly when the corpus does not support a claim.
-- **History** — View saved threads (query, answer, retrieved sources). Select a thread to see full details.
-- **Artifacts** — Generate an **Evidence table** (Claim | Evidence snippet | Citation | Confidence | Notes) from a selected thread, then **Export** as Markdown, CSV, or PDF (PDF requires `fpdf2`).
-- **Evaluation** — View a summary of the latest evaluation run (mean groundedness, mean answer relevance, and representative examples by query type). Run the full 20-query evaluation from the command line with `python -m src.eval.run_eval --no-build`; the portal displays the most recent `outputs/eval_runN.jsonl`.
+#### History Page
+- View all saved research threads
+- Click to expand and see full sources for any query
 
-Threads are stored in `threads/threads.jsonl`. Exported artifacts are downloaded via the browser (no separate exports folder required).
+#### Artifacts Page
+- Generate **Evidence Table**: Claim | Evidence snippets | Citations | Confidence | Notes
+- **Export** as Markdown, CSV, PDF, or **BibTeX** (for citation managers like Zotero)
+- Pre-filled with results from selected thread
+
+#### Build & Run Page
+- **Build Index**: Ingest PDFs → Chunk → Embed → FAISS index (no CLI needed)
+- **Run Evaluation**: Execute full 20-query evaluation from UI
+- **Run Trust Test**: Check citations + suggested next steps
+- Progress indicators for each operation
+
+#### Evaluation Page
+- View summary of any evaluation run
+- Mean metrics (groundedness, answer relevance)
+- Representative example queries and results
+
+### 4. **Structured Citations**
+Every answer includes:
+- **Inline citations**: `(SRC001, chunk_5)` — traceable to exact source and location
+- **References section**: Formatted bibliography with Authors, Year, Title, DOI/URL
+- Automatically pulled from `data/data_manifest.csv` for consistency
+
+### 5. **Evidence Strength Scoring**
+Automatic confidence labels:
+- **High**: Retrieval similarity ≥ 0.45
+- **Medium**: Retrieval similarity ≥ 0.30
+- **Low**: Similarity < 0.30
+
+Users can quickly see which evidence is strong vs. marginal.
+
+### 6. **Automated Evaluation Metrics**
+Computed for every query:
+- **Groundedness** (0–1): Fraction of answer sentences supported by retrieved chunks
+- **Answer Relevance** (0–1): Fraction of query keywords present in answer
+- Enable reproducible quality tracking without manual scoring
+
+### 7. **Research Threads & Export**
+- **Threads**: Save query + answer + sources as a research thread (`threads/threads.jsonl`)
+- **Export formats**: Markdown, CSV, PDF, BibTeX
+- Integrate findings into citation managers or documents directly
+
+### 8. **Retrieval Modes**
+- **Semantic retrieval** (default): FastEmbed or sentence-transformers embeddings + FAISS
+- **Keyword fallback**: Automatically used if index missing or embedding fails
+- **Force keyword-only**: `SKIP_QUERY_EMBED=1 python run_rag.py ...`
+
+### 9. **Trust & Transparency**
+- Every answer explicitly cites sources
+- Missing evidence stated clearly with suggested next retrieval step
+- Generated citations can be verified against source PDFs
 
 ---
 
-## Project Structure
+## 📖 Getting Started: Complete 5-Minute Walkthrough
+
+### Step 1: Install & Setup (1 minute)
+```bash
+cd /path/to/Research\ Portal
+pip install -r requirements.txt
+```
+
+### Step 2: Start Ollama (in separate terminal)
+```bash
+ollama serve
+# In another terminal:
+ollama pull gemma3:4b
+```
+
+### Step 3: CLI: Run Your First Query (30 seconds)
+```bash
+python run_rag.py --query "What is the average productivity impact of remote work?"
+```
+
+### Step 4: Try the Web UI (2 minutes)
+```bash
+streamlit run src/app/streamlit_app.py
+```
+
+---
+
+## 📊 Project Structure
 
 ```
 data/
-  data_manifest.csv        # Source metadata (title, authors, year, URL/DOI)
-  raw/                     # PDF files (one per source)
-  processed/               # Generated during run: parsed JSONs, FAISS index, chunks
-    faiss.index            # FAISS vector index for retrieval
-    chunks.json            # Serialized chunks with metadata
-    *.json                 # Ingested PDFs (parsed text, metadata)
+  ├─ data_manifest.csv               # 15 academic sources
+  ├─ raw/                            # Original PDFs
+  └─ processed/
+      ├─ faiss.index                 # Semantic search index
+      ├─ chunks.json                 # 191 chunks with metadata
+      └─ *.json                      # Parsed documents
 
 src/
-  ingest/
-    parse_pdf.py           # PDF parsing and text extraction
-  rag/
-    chunk.py               # Semantic chunking (2048 chars, 256 overlap)
-    embed_index.py         # Embedding and FAISS indexing
-    retrieve.py            # Semantic/keyword retrieval
-    generate.py            # Answer generation via Ollama LLM
-    citations.py           # Structured citations and evidence strength scoring
-    log_run.py             # JSONL logging of runs
-  app/                     # Phase 3 portal
-    streamlit_app.py       # Streamlit UI: Ask, History, Artifacts, Evaluation
-    threads.py             # File-based research threads (threads/threads.jsonl)
-    artifacts.py           # Evidence table generator and Markdown/CSV/PDF export
-  eval/
-    metrics.py             # Automated evaluation: groundedness, answer_relevance
-    queries.jsonl          # 20 test queries with expected behaviors
-    run_eval.py            # Batch evaluation runner
+  ├─ ingest/parse_pdf.py             # PDF extraction
+  ├─ rag/                  
+  │  ├─ chunk.py                     # Chunking strategy
+  │  ├─ embed_index.py               # FAISS indexing
+  │  ├─ retrieve.py                  # Semantic + keyword retrieval
+  │  ├─ generate.py                  # Ollama answer generation
+  │  ├─ citations.py                 # Citation formatting
+  │  └─ log_run.py                   # JSONL logging
+  ├─ eval/
+  │  ├─ metrics.py                   # Groundedness, relevance
+  │  ├─ queries.jsonl                # 20 test queries
+  │  ├─ run_eval.py                  # Batch evaluation
+  │  └─ trust_checks.py              # Citation verification
+  └─ app/
+     ├─ streamlit_app.py             # Web UI
+     ├─ threads.py                   # Save research threads
+     └─ artifacts.py                 # Export to PDF/CSV/BibTeX
 
-logs/
-  runs.jsonl               # Single-query run logs (from run_rag.py)
-
-threads/
-  threads.jsonl            # Saved research threads (query + evidence + answer)
-
-outputs/
-  eval_runN.jsonl         # Evaluation results (N auto-incremented)
-  Phase2_Evaluation_Report.md  # Comprehensive evaluation report
-
-run_rag.py                 # Main pipeline entry point (single query)
-requirements.txt           # Python dependencies
+logs/runs.jsonl                       # Query logs with metrics
+threads/threads.jsonl                 # Saved research sessions
+outputs/eval_runs/                   # Evaluation batch results
 ```
 
 ---
 
-## Key Files Explained
+## 🔧 Common Commands
 
-### `data/data_manifest.csv`
-Index of all 15 sources with columns:
-- `source_id`: Unique identifier (SRC001–SRC015)
-- `authors`, `year`, `title`: Bibliographic information
-- `url_or_doi`: Link or DOI for the source
-- `raw_path`, `processed_path`: File paths
-
-Used by the system to locate PDFs, build formatted References sections, and tag retrieved chunks.
-
-### `src/eval/queries.jsonl`
-20 manually curated test queries across three difficulty tiers:
-- **Direct Factual (Q01–Q09)**: Extract specific stats/findings from single sources
-- **Synthesis/Multi-hop (Q11–Q15)**: Integrate evidence across multiple sources
-- **Edge Cases (Q16–Q20)**: Test uncertainty handling and absence of evidence
-
-Each query includes an `expected_behavior` field describing what a high-quality answer should do.
-
----
-
-## Phase 2 Enhancements
-
-### 1. **Structured Citations**
-Inline citations `(source_id, chunk_id)` paired with a formatted References section from `data_manifest.csv` for full bibliographic attribution.
-
-### 2. **Evidence Strength Scoring**
-Automatic High/Medium/Low confidence labels (≥0.45/≥0.30/<0.30 retrieval scores) shown in answers, helping users gauge evidence reliability.
-
-### 3. **Automated Evaluation Metrics**
-- **Groundedness**: Fraction of answer sentences with direct textual overlap in retrieved chunks
-- **Answer Relevance**: Fraction of query keywords present in answer
-- Logged for all queries with reproducible computations.
-
----
-
-## How to Verify the Workflow
-
-### After running a query:
-```bash
-# View the most recent log entry with all 3 components
-tail -1 logs/runs.jsonl | python -m json.tool
-```
-
-You'll see:
-- `retrieved`: Top-5 chunks with source_id, chunk_id, score
-- `answer`: Full answer with citations and evidence strength
-- `groundedness`: Computed metric (0-1 scale)
-- `answer_relevance`: Computed metric (0-1 scale)
-
-### After running the evaluation set:
-```bash
-# View results from the latest eval run
-tail -1 outputs/eval_runN.jsonl | python -m json.tool
-```
-
-Each query includes retrieved chunks, answer, and both metrics.
-
----
-
-## System Components Summary
-
-| File | Purpose |
+| Task | Command |
 |------|---------|
-| `parse_pdf.py` | Extract and clean text from PDFs |
-| `chunk.py` | Split text into 2048-char chunks with 256-char overlap |
-| `embed_index.py` | Build FAISS vector index (optional; keyword retrieval used by default) |
-| `retrieve.py` | Retrieve top-k chunks via keyword matching |
-| `generate.py` | Call local Ollama LLM to generate answers |
-| `citations.py` | Format citations, references, and evidence strength labels |
-| `log_run.py` | Log query, answer, and metrics to JSONL |
-| `metrics.py` | Compute groundedness and answer_relevance |
+| Single query | `python run_rag.py --query "..."` |
+| Repeated queries | `python run_rag.py --no-build --query "..."` |
+| Latest log | `tail -1 logs/runs.jsonl | python -m json.tool` |
+| Run 20 tests | `python -m src.eval.run_eval --no-build` |
+| Web UI | `streamlit run src/app/streamlit_app.py` |
+| Keyword-only | `SKIP_QUERY_EMBED=1 python run_rag.py --query "..."` |
+| Custom LLM | `OLLAMA_MODEL=llama3.2:3b python run_rag.py ...` |
 
 ---
 
-## Advanced Options (Optional)
+## 💡 How It Works
 
-Use semantic embeddings instead of keyword-only retrieval:
-```bash
-USE_LOCAL_EMBEDDINGS=fastembed python run_rag.py --no-build --query "..."
-```
-
-Use OpenAI instead of Ollama for answer generation:
-```bash
-USE_OPENAI=1 python run_rag.py --no-build --query "..."
-```
-
-Use Gemini instead of Ollama (set GEMINI_API_KEY first):
-```bash
-GEMINI_API_KEY=your-key python run_rag.py --no-build --query "..."
-```
+**Retrieval**: Convert question to embedding → search FAISS index → get top-5 similar chunks  
+**Generation**: Pass chunks + question to Ollama LLM → generate answer with citations  
+**Scoring**: Compute groundedness (text overlap) and answer relevance (keyword overlap)  
+**Logging**: Save all queries, chunks, answers, and metrics to JSONL for analysis
 
 ---
 
-## Troubleshooting
+## 📈 Evaluation Results
 
-**"⚠️ Index build failed"**: The system tried to build a semantic index with embeddings (Gemini, OpenAI, or local) but failed. It automatically fell back to keyword-only retrieval, which is fast and reliable. The workflow will still complete successfully. To skip embedding attempts and go straight to keyword-only retrieval, unset any embedding-related environment variables.
+**Test Set**: 20 queries (direct factual, synthesis, edge cases)
 
-**"Segmentation fault: 11"**: This was a known issue with sentence-transformers on Apple Silicon. The system now defaults to keyword-only retrieval (safe) and only loads embedding models if explicitly requested.
+- **Retrieval Precision**: 90% (18/20 queries have relevant info in top-5)
+- **Groundedness**: 0.42 average (42% of answer sentences directly supported)
+- **Answer Relevance**: 0.87 average (87% of query keywords in answer)
+- **Citation Accuracy**: 19/20 answers use correct format
 
-**"Ollama not found"**: Ensure `ollama serve` is running in a separate terminal.
-
-**"No chunks retrieved"**: Run the first query without `--no-build` to ingest PDFs and create `data/processed/chunks.json`. Subsequent queries can use `--no-build` for speed.
+See [outputs/Phase2_Evaluation_Report.md](outputs/Phase2_Evaluation_Report.md) for full analysis.
 
 ---
 
-## Deliverables
+## 🎛️ Configuration
 
-**Phase 2**  
-✅ Complete end-to-end RAG pipeline (single command = retrieval + answer + log)  
-✅ 20-query evaluation set with baseline results  
-✅ Phase 2 evaluation report analyzing system performance and metrics  
-✅ Automated quality metrics (groundedness, answer_relevance) for all queries  
+### Environment Variables (`.env`)
+```bash
+OLLAMA_MODEL=gemma3:4b         # Default LLM model
+SKIP_QUERY_EMBED=1             # Force keyword-only retrieval
+TOP_K=5                         # Chunks to retrieve
+CHUNK_SIZE=2048                 # Chunk size (chars)
+CHUNK_OVERLAP=256              # Overlap between chunks
+```
 
-**Phase 3**  
-✅ Working PRP app: `streamlit run src/app/streamlit_app.py`  
-✅ Search, ask, show sources/citations, and history (research threads)  
-✅ Artifact generator: Evidence table from any thread  
-✅ Export: Markdown, CSV, and PDF download for artifacts  
-✅ Evaluation view: summary of latest eval run and representative examples  
-✅ Trust behavior: every answer includes citations; missing evidence stated explicitly
+### Retrieval Backends (auto-selected)
+1. **FastEmbed** (ONNX, lightweight) ← preferred
+2. **sentence-transformers** (PyTorch)
+3. **Keyword fallback** (no embeddings)
+
+### Ollama Models
+- `gemma3:4b` (default, 3GB)
+- `llama3.2:3b` (smaller, 2GB)
+- `mistral:latest` (alternative)
+
+---
+
+## ⚠️ Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| "Ollama not found" | Run `ollama serve` in separate terminal |
+| "No chunks retrieved" | First run without `--no-build` to build index |
+| "Index build failed" | Falls back to keyword-only automatically |
+| "Segmentation fault (Apple Silicon)" | FastEmbed installed; sentence-transformers optional |
+| "Query takes >30s" | Check `data/processed/faiss.index` exists |
+| "Can't access http://localhost:8501" | Run `streamlit run src/app/streamlit_app.py` first |
+
+---
+
+## 🚀 Advanced Usage
+
+### Add Your Own Sources
+1. Place PDFs in `data/raw/`
+2. Add entries to `data/data_manifest.csv`
+3. Run: `python run_rag.py --query "..."`
+
+### Export for Academic Writing
+- Generate evidence tables on **Artifacts** page
+- Export as BibTeX for Zotero/Mendeley
+- Copy citations into your paper
+
+### Evaluate Custom Queries
+1. Add queries to `src/eval/queries.jsonl`
+2. Run: `python -m src.eval.run_eval --no-build`
+3. Compare metrics in `outputs/eval_runs/`
+
+---
+
+## 📊 System Overview
+
+This project implements a **complete RAG pipeline** with:
+
+- **Phase 2**: Evaluation metrics, structured citations, evidence scoring
+- **Phase 3**: Web UI with search, threads, artifacts, and exports
+
+**Key Technologies**:
+- Ollama (local LLM, no API keys)
+- FAISS (semantic search)
+- Streamlit (web interface)
+- pandas + pypdf (data processing)
+
+**Evaluation**: 20 test queries across 3 difficulty levels with automated metrics for system quality assessment

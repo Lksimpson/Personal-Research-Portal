@@ -47,7 +47,7 @@ The evaluation query set of 20 queries was designed with explicit expected behav
 
 ### 2.1 Evaluation Design
 
-The system was evaluated on 20 hand-crafted queries with known expected behaviors documented in queries.jsonl. Each query specifies the target information, expected sources, and evaluation focus (e.g., numeric extraction, multi-source synthesis, absence-of-evidence handling). For each query, the system retrieved the top-5 chunks by cosine similarity and generated an answer using the local LLM, with all outputs logged to eval_run10.jsonl.
+The system was evaluated on 20 hand-crafted queries with known expected behaviors documented in queries.jsonl. Each query specifies the target information, expected sources, and evaluation focus (e.g., numeric extraction, multi-source synthesis, absence-of-evidence handling). For each query, the system retrieved the top-5 chunks by cosine similarity and generated an answer using the local LLM, with all outputs logged to outputs/eval_runs/eval_run10.jsonl.
 
 Two primary metrics were calculated automatically for each query using custom evaluation functions: groundedness (the fraction of answer sentences that textually overlap with retrieved chunk content) and answer relevance (the fraction of query keywords present in the answer). These metrics are implemented in src/eval/metrics.py and computed during the evaluation pipeline execution. Groundedness uses sentence-level string matching to verify whether answer statements appear in the retrieved context, while answer relevance performs keyword-based overlap analysis between query and answer text. Both metrics operate on a continuous 0-1 scale.
 
@@ -241,4 +241,4 @@ The system demonstrates the feasibility of local, privacy-preserving RAG for res
 5. Phase 1 Individual Project Assignment (CMU Heinz AIM, 2026).
 6. Research Portal Data Manifest (data_manifest.csv).
 7. Evaluation Query Set (queries.jsonl, 20 queries).
-8. Evaluation Run Results (eval_run10.jsonl).
+8. Evaluation Run Results (outputs/eval_runs/eval_run10.jsonl).

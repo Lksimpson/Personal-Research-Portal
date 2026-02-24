@@ -10,10 +10,11 @@ from pypdf import PdfReader
 
 
 def clean_text(text: str) -> str:
-    """Normalize whitespace and remove common PDF artifacts."""
+    """Normalize whitespace and remove common PDF artifacts. Preserves paragraph breaks (double newline) for chunking."""
     if not text or not text.strip():
         return ""
-    text = re.sub(r"\s+", " ", text)
+    # Collapse runs of spaces/tabs to single space but keep newlines so paragraph boundaries remain
+    text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text.strip())
     return text.strip()
 

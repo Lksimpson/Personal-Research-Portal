@@ -20,10 +20,27 @@ def _split_into_paragraphs(text: str) -> list[str]:
     return [b.strip() for b in blocks if b.strip()]
 
 
+def _split_long_text(text: str, max_chars: int = CHUNK_CHARS, overlap: int = OVERLAP_CHARS) -> list[str]:
+    """Split a long string into segments of max_chars with overlap (for when one paragraph exceeds max_chars)."""
+    if not text or len(text) <= max_chars:
+        return [text] if text and text.strip() else []
+    step = max_chars - overlap
+    segments = []
+    start = 0
+    while start < len(text):
+        end = min(start + max_chars, len(text))
+        segments.append(text[start:end].strip())
+        if end >= len(text):
+            break
+        start = end - overlap
+    return [s for s in segments if s]
+
+
 def chunk_text(text: str, source_id: str) -> list[dict]:
     """
     Chunk text with overlap. Each chunk: { "chunk_id", "source_id", "text" }.
-    Uses paragraph boundaries when possible; otherwise fixed-size with overlap.
+    Uses paragraph boundaries when possible; when a single paragraph exceeds CHUNK_CHARS,
+    splits it by size with overlap so each source can have multiple chunks (chunk_0, chunk_1, ...).
     """
     if not text or not text.strip():
         return []
@@ -45,9 +62,20 @@ def chunk_text(text: str, source_id: str) -> list[dict]:
                     "text": buffer.strip(),
                 })
                 chunk_index += 1
-                # Overlap: keep last OVERLAP_CHARS of buffer
                 buffer = buffer[-OVERLAP_CHARS:] if len(buffer) > OVERLAP_CHARS else buffer
-            buffer = para
+            # If this paragraph alone exceeds CHUNK_CHARS, split by size so we get multiple chunks per source
+            if len(para) > CHUNK_CHARS:
+                for segment in _split_long_text(para, CHUNK_CHARS, OVERLAP_CHARS):
+                    chunk_id = f"{source_id}_chunk_{chunk_index}"
+                    chunks.append({
+                        "chunk_id": chunk_id,
+                        "source_id": source_id,
+                        "text": segment,
+                    })
+                    chunk_index += 1
+                buffer = ""
+            else:
+                buffer = para
 
     if buffer.strip():
         chunk_id = f"{source_id}_chunk_{chunk_index}"
