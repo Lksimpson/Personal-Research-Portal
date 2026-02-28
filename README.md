@@ -24,7 +24,7 @@ From the project root:
 
 ```bash
 # 1. Install dependencies (if not already done)
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 # 2. Launch the web UI. Run the command below then open http://localhost:8501
 streamlit run src/app/streamlit_app.py

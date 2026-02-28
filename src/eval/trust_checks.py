@@ -26,6 +26,40 @@ SUGGESTED_NEXT_PHRASES = [
     "next retrieval",
     "suggest a",
     "would resolve",
+    "search for",
+    "look for",
+    "check for",
+    "another query",
+    "different search",
+    "additional sources",
+    "further research",
+    "more specific",
+]
+
+# Phrases indicating missing/absent evidence
+MISSING_EVIDENCE_PHRASES = [
+    "not found",
+    "not in corpus",
+    "does not support",
+    "evidence not found",
+    "not specified",
+    "no chunk supports",
+    "corpus does not",
+    "does not mention",
+    "does not contain",
+    "no evidence",
+    "not present",
+    "not available",
+    "cannot answer",
+    "cannot find",
+    "no information",
+    "lacks evidence",
+    "not addressed",
+    "not discussed",
+    "no data",
+    "not in the provided",
+    "doesn't mention",
+    "doesn't contain",
 ]
 
 
@@ -43,18 +77,7 @@ def _has_suggested_next_step(answer: str) -> bool:
 def _has_missing_evidence_phrase(answer: str) -> bool:
     """Return True if answer indicates missing/absent evidence."""
     lower = answer.lower()
-    return any(
-        phrase in lower
-        for phrase in [
-            "not found",
-            "not in corpus",
-            "does not support",
-            "evidence not found",
-            "not specified",
-            "no chunk supports",
-            "corpus does not",
-        ]
-    )
+    return any(phrase in lower for phrase in MISSING_EVIDENCE_PHRASES)
 
 
 def run_trust_behavior_checks(

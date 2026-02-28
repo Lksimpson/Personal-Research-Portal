@@ -20,6 +20,11 @@ try:
 except ImportError:
     pass
 
+# Avoid Hugging Face tokenizers parallelism warnings when Streamlit forks/reloads.
+# Set this before any code that may import/use `sentence_transformers` or `tokenizers`.
+import os
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 import streamlit as st
 import pandas as pd
 
@@ -378,7 +383,7 @@ elif page == "Artifacts":
                     if claim:
                         st.caption("Claim / query")
                         st.write(claim)
-                    st.dataframe(artifact["rows"], use_container_width=True, hide_index=True)
+                    st.dataframe(artifact["rows"], width='stretch', hide_index=True)
                     st.success("Use the Export section below to download as Markdown, CSV, or PDF.")
                 else:
                     st.warning("Could not build evidence table from this thread.")
@@ -582,7 +587,7 @@ elif page == "Evaluation":
                     "Score 3 — Usefulness (1–4)": _score3(e),
                     "Notes + failure tag": notes_display,
                 })
-            st.dataframe(rows, use_container_width=True, hide_index=True)
+            st.dataframe(rows, width='stretch', hide_index=True)
 
             st.subheader("Representative examples")
             by_type = {}

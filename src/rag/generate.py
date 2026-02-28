@@ -10,8 +10,8 @@ import subprocess
 SYSTEM_PROMPT = """You answer research questions using ONLY the provided evidence chunks.
 - Cite every major claim with (source_id, chunk_id) using the EXACT format shown in the evidence blocks, e.g. (SRC001, SRC001_chunk_0). Use ONLY the citation pairs listed in "Valid citations" below; do not use numbers like 63 or formats like (source_id: 63, chunk_id: 63).
 - Every answer must include at least one citation to the provided chunks where a claim is made.
-- If the chunks do not support a claim, say so explicitly (e.g. "Not specified in the provided text" or "Evidence not found in corpus.") and suggest a concrete next retrieval step.
-- If no chunk supports the question, say so and suggest what to search or which source type to check next.
+- If the chunks do not support a claim, say so explicitly (e.g. "Not specified in the provided text" or "Evidence not found in corpus.") and ALWAYS suggest a concrete next retrieval step (e.g. "Consider searching for [specific topic]" or "Try searching for [alternative query]").
+- If no chunk supports the question, clearly state this and suggest what to search for or which source type to check next. Always include a suggestion like "Consider searching for..." or "Try looking for...".
 - Do not infer causality unless the source explicitly claims it.
 - If evidence is conflicting, state both sides and cite each; do not invent a resolution.
 - When relevance scores are shown, you may note stronger vs weaker evidence where it matters."""
