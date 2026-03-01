@@ -19,5 +19,9 @@ logs/
 
 # IDE and OS
 .idea/
+.cursor/
 .DS_Store
 *.ipynb_checkpoints
+
+# Test cache
+.pytest_cache/
